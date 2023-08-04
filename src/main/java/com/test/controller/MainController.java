@@ -1,8 +1,11 @@
 package com.test.controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import com.test.entity.Tbblogpost;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -14,11 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -33,9 +32,6 @@ public class MainController {
 	
 	@Autowired
 	MainService mainService;
-	
-	String uriGetJobList = "http://dev3.dansmultipro.co.id/api/recruitment/positions.json";
-	String uriGetJobDetail = "http://dev3.dansmultipro.co.id/api/recruitment/positions/";
 	
 	@PostMapping(path = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<String> login(@RequestBody String body) throws JsonMappingException, JsonProcessingException {
@@ -56,26 +52,6 @@ public class MainController {
 		}
 		
 		return new ResponseEntity<String>(response, HttpStatus.OK);
-	}
-	
-	@GetMapping(path = "/getJobList", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<String> getJobList(){
-		
-		logger.info("uri get job list hitted start");
-		String result = httpRequest(uriGetJobList);
-		logger.info("uri get job list hitted end");
-		
-		return new ResponseEntity<String>(result, HttpStatus.OK);
-	}
-	
-	@GetMapping(path = "/getJobDetail/{ID}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<String> getJobDetail(@PathVariable("ID") String id){
-		
-		logger.info("uri get job detail hitted start");
-		String result = httpRequest(uriGetJobDetail+id);
-		logger.info("uri get job detail hitted end");
-		
-		return new ResponseEntity<String>(result, HttpStatus.OK);
 	}
 	
 	public String httpRequest(String uri) {
@@ -107,6 +83,94 @@ public class MainController {
 		}
 		
 		return jsonResult;
+	}
+
+	@GetMapping(path = "/ping", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<String> ping(){
+
+		String result = "Welcome to blog API";
+
+		return new ResponseEntity<String>(result, HttpStatus.OK);
+	}
+
+	@PostMapping(path = "/saveBlogPost", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<String> saveBlogPost(@RequestBody Tbblogpost body){
+		ObjectMapper mapper = new ObjectMapper();
+		String result = "";
+		try {
+			Tbblogpost dataSave = mainService.saveBlogPost(body);
+			result = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(dataSave);
+		} catch (Exception e){
+			e.printStackTrace();
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		return new ResponseEntity<String>(result, HttpStatus.OK);
+	}
+
+	@GetMapping(path = "/getAllBlogPost", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<String> getBlogPost(@RequestParam("pageNum") Integer pageNum, @RequestParam("pageSize") Integer pageSize){
+		ObjectMapper mapper = new ObjectMapper();
+		String result = "";
+
+		try {
+			List<Tbblogpost> data = mainService.getAllBlogPost(pageNum, pageSize);
+			result = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(data);
+		} catch (Exception e){
+			e.printStackTrace();
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return new ResponseEntity<String>(result, HttpStatus.OK);
+	}
+
+	@GetMapping(path = "/getAllBlogPost/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<String> findBlogPostById(@PathVariable("id") Integer id){
+		ObjectMapper mapper = new ObjectMapper();
+		String result = "";
+		try {
+			Optional<Tbblogpost> data = mainService.findBlogPostById(id);
+			result = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(data.get());
+		} catch(Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<String>(HttpStatus.NO_CONTENT);
+		}
+
+		return new ResponseEntity<String>(result, HttpStatus.OK);
+	}
+
+	@PutMapping(path = "/updateBlogPost", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<String> updateBlogPost(@RequestBody Tbblogpost body){
+		ObjectMapper mapper = new ObjectMapper();
+		String result = "";
+		Map<String, Object> response = new HashMap<>();
+
+		try {
+			response = mainService.updateBlogPost(body);
+			if ((Integer) response.get("rspnCd") == 0){
+				result = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+				return new ResponseEntity<String>(result, HttpStatus.INTERNAL_SERVER_ERROR);
+			} else {
+				result = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response.get("data"));
+			}
+		} catch (Exception e){
+			e.printStackTrace();
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return new ResponseEntity<String>(result, HttpStatus.OK);
+	}
+
+	@DeleteMapping(path = "/deleteById")
+	public ResponseEntity<String> deleteBlogPostById(@RequestParam("id") Integer id){
+
+		try {
+			mainService.deleteById(id);
+		} catch (Exception e){
+			e.printStackTrace();
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return new ResponseEntity<String>("delete user successfully",HttpStatus.OK);
 	}
 
 }

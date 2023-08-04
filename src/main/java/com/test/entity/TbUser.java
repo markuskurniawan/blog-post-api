@@ -6,6 +6,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
+import lombok.AllArgsConstructor;
 import org.hibernate.annotations.DynamicUpdate;
 
 import lombok.Getter;
@@ -17,6 +18,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @DynamicUpdate
 public class TbUser {
 
@@ -35,4 +37,10 @@ public class TbUser {
 	
 	@Transient
 	String responseMessage;
+
+	public TbUser(String username, String password, String token) {
+		this.username = username;
+		this.password = password;
+		this.token = token;
+	}
 }

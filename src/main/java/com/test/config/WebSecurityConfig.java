@@ -32,11 +32,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     
     @Override
     public void configure(HttpSecurity http) throws Exception {
+		http.headers().frameOptions().disable();
     	http.csrf().disable()
     		.cors().and()
     		.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
     		.authorizeRequests()
-    		.antMatchers("/login")
+    		.antMatchers("/login", "/ping", "/h2-console/**")
     		.permitAll()
     		.anyRequest().authenticated().and()
     		.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
