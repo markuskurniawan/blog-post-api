@@ -53,37 +53,6 @@ public class MainController {
 		
 		return new ResponseEntity<String>(response, HttpStatus.OK);
 	}
-	
-	public String httpRequest(String uri) {
-		Map<String, Object> map = new HashMap<String, Object>();
-		String jsonResult = "";
-		ObjectMapper mapper = new ObjectMapper();
-		
-		try {
-			CloseableHttpClient httpClient = HttpClients.createDefault();
-			HttpGet httpGet = new HttpGet(uri);
-			CloseableHttpResponse response = httpClient.execute(httpGet);
-			try {
-				int statusCode = response.getStatusLine().getStatusCode();
-				String reasonPhrase = response.getStatusLine().getReasonPhrase();
-				if (statusCode != 200) {
-					map.put("code", String.valueOf(statusCode));
-					map.put("result", false);
-					map.put("resultDesc", reasonPhrase);
-					jsonResult = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(map);
-				} else {
-					jsonResult = EntityUtils.toString(response.getEntity());
-				}
-			} finally {
-				response.close();
-			}
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
-		}
-		
-		return jsonResult;
-	}
 
 	@GetMapping(path = "/ping", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<String> ping(){
